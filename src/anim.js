@@ -2,13 +2,13 @@ import VoxelMap from "./VoxelMap";
 import * as THREE from "three";
 import texture from "./assets/texture/oakMDF.png";
 
-let map = new VoxelMap(16, 16, 16);
+let map = new VoxelMap(32, 16, 32);
 
 let textureLoader =  new THREE.TextureLoader()
 let textureMap = await textureLoader.loadAsync(texture)
 
 map.forEach((x, y, z, value) => {
-  let val = (Math.sin(x)+ Math.sin(y))*2 >z
+  let val = 2 >y && x%2 == 0
   map.setVoxel(x, y, z, val);
 });
 
