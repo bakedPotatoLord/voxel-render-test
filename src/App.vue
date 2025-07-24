@@ -16,9 +16,6 @@ const canvas = ref(null)
 onMounted(async () => {
   let c = canvas.value
   if (c) {
-
-    console.log(c)
-
     let cw = c.width = 600
     let ch = c.height = 600
 
@@ -34,12 +31,12 @@ onMounted(async () => {
 
     const light = new THREE.PointLight(0xFFFFFF,1,0,0.1)
     light.position.set(10, 16, 30);
-    scene.add(light);
+    // scene.add(light);
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambient);
+    // scene.add(ambient);
 
-    camera.position.set(50,50,50)
+    camera.position.set(3,3,3)
 
     camera.lookAt(0,0,0)
 
@@ -59,8 +56,6 @@ onMounted(async () => {
     }
 
     animate();
-
-    console.log(scene, camera, renderer)
   }
 })
 
