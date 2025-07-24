@@ -1,12 +1,66 @@
 <script setup>
 
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import * as THREE from 'three'
+import { draw, setup } from './anim';
+import  { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import Stats from 'three/addons/libs/stats.module.js';
 
-const canvas = null
+const canvas = ref(null)
 
-onMounted(() => {
-  if(canvas) {
+
+
+
+
+
+onMounted(async () => {
+  let c = canvas.value
+  if (c) {
+
+    console.log(c)
+
+    let cw = c.width = 600
+    let ch = c.height = 600
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, cw/ ch, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: c, antialias: true });
+    renderer.setSize(cw,ch);
+    renderer.setClearColor(0xffffff, 1);
+
+    // const cube = new THREE.Mesh(geometry, material);
+    // scene.add(cube);
+
+    const light = new THREE.PointLight(0xFFFFFF,1,0,0.1)
+    light.position.set(10, 5, 30);
+    scene.add(light);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(ambient);
+
+    camera.position.set(50,50,50)
+
+    camera.lookAt(0,0,0)
+
+    let stats = new Stats();
+    c.appendChild( stats.dom );
+
+    let controls = new OrbitControls(camera,c)
+   
     
+
+    await setup(scene, camera, renderer)
+
+    function animate() {
+      draw(scene, camera, renderer)
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    console.log(scene, camera, renderer)
   }
 })
 
@@ -14,22 +68,13 @@ onMounted(() => {
 
 <template>
   <div>
-    
-    <canvas rel="calvas"></canvas>
+
+    <canvas ref="canvas"></canvas>
   </div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+canvas {
+  border: 2px solid black
 }
 </style>
