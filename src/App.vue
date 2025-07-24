@@ -33,10 +33,10 @@ onMounted(async () => {
     // scene.add(cube);
 
     const light = new THREE.PointLight(0xFFFFFF,1,0,0.1)
-    light.position.set(10, 5, 30);
+    light.position.set(10, 16, 30);
     scene.add(light);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambient);
 
     camera.position.set(50,50,50)
