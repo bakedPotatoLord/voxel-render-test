@@ -29,6 +29,25 @@ export default class VoxelMap {
     }
   }
 
+  toVertexArray() {
+    let arr = new Float32Array(this.data.length * 3);
+    let i = 0
+
+    for (let x = 0; x < this.width; x++) {
+      for (let y = 0; y < this.height; y++) {
+        for (let z = 0; z < this.depth; z++) {
+          if (this.getVoxel(x, y, z)) {
+            arr[i] = x;
+            arr[i+1] = y;
+            arr[i+2] = z;
+            i+=3
+          }
+        }
+      }
+    }
+    return arr.subarray(0, i);
+  }
+
   get count(){return this.data.length}
 
   
