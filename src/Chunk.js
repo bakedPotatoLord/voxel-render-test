@@ -4,6 +4,10 @@ import ndarray from "ndarray";
 
 import compileMesher from "greedy-mesher";
 
+
+
+const max_triangles = 1024;
+
 export default class Chunk {
   constructor(size, pos) {
     this.width = size.x;
@@ -15,6 +19,23 @@ export default class Chunk {
     this.arr = new ndarray(this.data, [this.width, this.height, this.depth], [1, this.width, this.width * this.height],0);
 
     this.geo = new BufferGeometry();
+
+    this.map = null
+
+
+    //for greedy meshing
+    this.i = 0
+    this.points = new Uint16Array(max_triangles * 3),
+    this.uvs = new Uint8Array(max_triangles * 2);
+
+    this.mesher = compileMesher({
+      extraArgs: 1,
+      order: [0, 1, 2],
+      append: (lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, val, result) => {
+        this.i = this.quadToMesh(lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, this.points, this.uvs,this.i);
+        // console.log("new quad",{lo_x, lo_y, lo_z, hi_x, hi_y, hi_z,i});
+      },
+    });
 
     // console.log(this.arr)
   }
@@ -37,7 +58,7 @@ export default class Chunk {
     }
   }
 
-  quadToMesh(lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, points, uvs, indexOffset = 0) {
+  quadToMesh(lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, points, uvs,) {
     // Corner positions
     const px = [lo_x, hi_x];
     const py = [lo_y, hi_y];
@@ -129,8 +150,8 @@ export default class Chunk {
       [0, 1],
     ];
 
-    let pIdx = indexOffset;
-    let uvIdx = indexOffset;
+    let pIdx = this.i;
+    let uvIdx = this.i;
 
     for (let f = 0; f < faces.length; ++f) {
       const tri = faces[f];
@@ -149,32 +170,21 @@ export default class Chunk {
     return pIdx;
   }
 
-  greedyMesh() {
-    const max_triangles = 1_000;
 
-    let i = 0
+  /**
+   * Computes the mesh for the current chunk, using the stored points and
+   * UVs. The returned mesh is a THREE.BufferGeometry.
+   *
+   * @returns {BufferGeometry} The computed mesh.
+   */
+  mesh() {
+    this.mesher(this.arr, []);
 
-    let points = new Uint16Array(max_triangles * 3),
-      uvs = new Uint16Array(max_triangles * 2);
+    let pointsView = this.points.subarray(0,this.i);
+    let uvsView = this.uvs.subarray(0,(this.i<<1)/3);
 
-    let mesher = compileMesher({
-      extraArgs: 1,
-      order: [0, 1, 2],
-      append: (lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, val, result) => {
-        i = this.quadToMesh(lo_x, lo_y, lo_z, hi_x, hi_y, hi_z, points, uvs,i);
-        // console.log("new quad",{lo_x, lo_y, lo_z, hi_x, hi_y, hi_z,i});
-      },
-    });
-
-    mesher(this.arr, []);
-    return { points, uvs };
-  }
-
-  toMesh() {
-    let { points, uvs } = this.greedyMesh();
-
-    this.geo.setAttribute("position", new BufferAttribute(points, 3));
-    this.geo.setAttribute("uv", new BufferAttribute(uvs, 2));
+    this.geo.setAttribute("position", new BufferAttribute(pointsView, 3));
+    this.geo.setAttribute("uv", new BufferAttribute(uvsView, 2));
 
     this.geo.computeVertexNormals();
 
@@ -183,7 +193,7 @@ export default class Chunk {
   }
 
   toObject(material) {
-    let mesh = new Mesh(this.toMesh(), material);
+    let mesh = new Mesh(this.mesh(), material);
     mesh.position.set(this.position.x, this.position.y, this.position.z);
     return mesh;
   }
@@ -192,7 +202,13 @@ export default class Chunk {
     this.data.fill(val)
   }
 
+  setMap(map){
+    this.map = map
+  }
 
+  getMap(){
+    return this.map
+  }
 
   get count() {
     return this.data.length;

@@ -27,6 +27,8 @@ export default class VoxelMap {
 
     this.chunks = Array(chunkCount);
 
+    this.toUpdate = [];
+
     //init all chunks
     for (let x = 0; x < this.numChunks.x; x++) {
       for (let y = 0; y < this.numChunks.y; y++) {
@@ -37,12 +39,12 @@ export default class VoxelMap {
             chunkSize,
             new Vector3(x, y, z)
           ));
+          chunk.setMap(this);
 
           let outerX = x == this.numChunks.x - 1 && this.remChunks.x != 0;
           let outerY = y == this.numChunks.y - 1 && this.remChunks.y != 0;
           let outerZ = z == this.numChunks.z - 1 && this.remChunks.z != 0;
 
-          console.log(this.remChunks);
 
           if (outerX || outerY || outerZ) {
             console.log(outerX, outerY, outerZ);
@@ -77,5 +79,11 @@ export default class VoxelMap {
 
   getObjects(material) {
     return this.chunks.map((chunk) => chunk.toObject(material));
+  }
+
+  updateChunks(){
+    this.toUpdate.forEach((chunk) => {
+      chunk.mesh()
+    })
   }
 }

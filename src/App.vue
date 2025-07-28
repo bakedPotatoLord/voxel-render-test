@@ -20,7 +20,7 @@ onMounted(async () => {
     let ch = c.height = 600
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, cw/ ch, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, cw/ ch, 0.1, 10000);
 
     const renderer = new THREE.WebGLRenderer({ canvas: c, antialias: true });
     renderer.setSize(cw,ch);
@@ -34,7 +34,7 @@ onMounted(async () => {
     // scene.add(light);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(-8,6,7);
+    dirLight.position.set(-8,6,-7);
     scene.add(dirLight);
 
     const axesHelper = new THREE.AxesHelper( 5 );
@@ -44,22 +44,25 @@ onMounted(async () => {
     const ambient = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambient);
 
-    camera.position.set(3,3,3)
+    camera.position.set(-30,30,-30)
 
     camera.lookAt(0,0,0)
 
     let stats = new Stats();
-    c.appendChild( stats.dom );
+    stats.showPanel( 0 ); 
+    document.body.appendChild( stats.dom );
+    stats.begin();
 
     let controls = new OrbitControls(camera,c)
-   
-    
 
     await setup(scene, camera, renderer)
 
     function animate() {
+
+      stats.begin();
       draw(scene, camera, renderer)
       renderer.render(scene, camera);
+      stats.end();
       requestAnimationFrame(animate);
     }
 
