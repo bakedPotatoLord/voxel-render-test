@@ -9,7 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stdlib/ndarray": "^0.3.3",
+    "ao-mesher": "^0.2.10",
+    "global": "^4.4.0",
+    "greedy-mesher": "^1.0.3",
+    "ndarray": "1.0.1",
+    "ndarray-fill": "^1.0.2",
     "rollup-plugin-shader": "^0.0.3",
+    "voxel-mesher": "^0.14.4",
     "vue": "^3.5.17"
   },
   "devDependencies": {

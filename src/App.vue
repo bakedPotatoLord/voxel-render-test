@@ -26,15 +26,23 @@ onMounted(async () => {
     renderer.setSize(cw,ch);
     renderer.setClearColor(0xffffff, 1);
 
-    // const cube = new THREE.Mesh(geometry, material);
-    // scene.add(cube);
 
-    const light = new THREE.PointLight(0xFFFFFF,1,0,0.1)
-    light.position.set(10, 16, 30);
+    scene.background = new THREE.Color( "lightblue" );
+
+    const light = new THREE.PointLight(0xFFFFFF,10,20,0.1)
+    light.position.set(8, 8, 8);
     // scene.add(light);
 
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(-8,6,7);
+    scene.add(dirLight);
+
+    const axesHelper = new THREE.AxesHelper( 5 );
+    scene.add( axesHelper );
+
+
     const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-    // scene.add(ambient);
+    scene.add(ambient);
 
     camera.position.set(3,3,3)
 

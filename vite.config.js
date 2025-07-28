@@ -10,4 +10,10 @@ export default defineConfig({
       include: '**/*.glsl'
     }),
   ],
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['global'], // ensures it gets included for dev
+  },
 })

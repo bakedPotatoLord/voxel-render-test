@@ -1,54 +1,81 @@
-
+import { Vector3 } from "three";
+import * as THREE from "three";
+import Chunk from "./Chunk";
 
 export default class VoxelMap {
-  constructor(width, height, depth) {
-    this.width = width;
-    this.height = height;
-    this.depth = depth;
+  /**
+   * @param {Vector3} chunkSize
+   * @param {Vector3} fullSize
+   */
+  constructor(chunkSize, fullSize) {
+    this.chunkSize = chunkSize.clone();
+    this.fullSize = fullSize;
 
-    this.data = new Uint8Array((width * height * depth) );
-  }
+    //number of chunks in each direction, including partially filled ones
 
-  getVoxel(x, y, z) {
-    const index = (x + y * this.width + z * this.width * this.height) ;
-    return Boolean(this.data[index]);
-  }
+    this.numChunks = new Vector3();
+    this.remChunks = new Vector3();
 
-  setVoxel(x, y, z, value) {
-    const index = (x + y * this.width + z * this.width * this.height) ;
-    this.data[index] = Number(value);
-  }
-
-  forEach(fn){
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        for (let z = 0; z < this.depth; z++) {
-          fn(x, y, z, this.getVoxel(x, y, z));
-        }
-      }
+    for (let axis of ["x", "y", "z"]) {
+      //set number of chunks including partially filled ones
+      this.numChunks[axis] = Math.ceil(fullSize[axis] / chunkSize[axis]);
+      //set remainder on each side. this is the number of non-filled voxels
+      this.remChunks[axis] = fullSize[axis] % chunkSize[axis];
     }
-  }
 
-  toVertexArray() {
-    let arr = new Float32Array(this.data.length * 3);
-    let i = 0
+    let chunkCount = this.numChunks.x * this.numChunks.y * this.numChunks.z;
 
-    for (let x = 0; x < this.width; x++) {
-      for (let y = 0; y < this.height; y++) {
-        for (let z = 0; z < this.depth; z++) {
-          if (this.getVoxel(x, y, z)) {
-            arr[i] = x;
-            arr[i+1] = y;
-            arr[i+2] = z;
-            i+=3
+    this.chunks = Array(chunkCount);
+
+    //init all chunks
+    for (let x = 0; x < this.numChunks.x; x++) {
+      for (let y = 0; y < this.numChunks.y; y++) {
+        for (let z = 0; z < this.numChunks.z; z++) {
+          const index =
+            x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.z;
+          let chunk = (this.chunks[index] = new Chunk(
+            chunkSize,
+            new Vector3(x, y, z)
+          ));
+
+          let outerX = x == this.numChunks.x - 1 && this.remChunks.x != 0;
+          let outerY = y == this.numChunks.y - 1 && this.remChunks.y != 0;
+          let outerZ = z == this.numChunks.z - 1 && this.remChunks.z != 0;
+
+          console.log(this.remChunks);
+
+          if (outerX || outerY || outerZ) {
+            console.log(outerX, outerY, outerZ);
+            chunk.forEach((x, y, z) => {
+              let ret = !(
+                (outerX && x > this.remChunks.x) ||
+                (outerY && y > this.remChunks.y) ||
+                (outerZ && z > this.remChunks.z)
+              );
+
+              chunk.setVoxel(x, y, z, ret ? 1 : 0);
+            });
+
+            console.log(chunk);
+          } else {
+            chunk.fillVoxels(1);
           }
         }
       }
     }
-    return arr.subarray(0, i);
   }
 
-  get count(){return this.data.length}
+  getChunk(x, y, z) {
+    const index =
+      x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.z;
+    return Boolean(this.chunks[index]);
+  }
 
-  
+  getGeometries() {
+    return this.chunks.map((chunk) => chunk.toMesh());
+  }
+
+  getObjects(material) {
+    return this.chunks.map((chunk) => chunk.toObject(material));
+  }
 }
