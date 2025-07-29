@@ -29,24 +29,25 @@ onMounted(async () => {
 
     scene.background = new THREE.Color( "lightblue" );
 
-    const light = new THREE.PointLight(0xFFFFFF,10,20,0.1)
-    light.position.set(8, 8, 8);
-    // scene.add(light);
+
+
+
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight2.position.set(8, 8, 9);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(-8,6,-7);
-    scene.add(dirLight);
 
     const axesHelper = new THREE.AxesHelper( 5 );
-    scene.add( axesHelper );
 
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambient);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    
+    scene.add(ambient,dirLight,dirLight2,axesHelper);
 
-    camera.position.set(-30,30,-30)
+    camera.position.set(-100,100,-100)
 
-    camera.lookAt(0,0,0)
+    camera.lookAt(32,32,32)
 
     let stats = new Stats();
     stats.showPanel( 0 ); 
