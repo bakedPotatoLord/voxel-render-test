@@ -81,6 +81,16 @@ export default class VoxelMap {
     return this.chunks.map((chunk) => chunk.toObject(material));
   }
 
+  getIntersectingChunks(box) {
+    this.toUpdate = [];
+    for (let chunk of this.chunks) {
+      if (chunk.box.intersectsBox(box)) {
+        this.toUpdate.push(chunk);
+      }
+    }
+    return this.toUpdate;
+  }
+
   updateChunks(){
     this.toUpdate.forEach((chunk) => {
       chunk.mesh()
