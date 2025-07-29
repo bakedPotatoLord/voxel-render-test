@@ -11,26 +11,27 @@ let textureMap = await textureLoader.loadAsync(texture)
 
 textureMap.matrix.setUvTransform(0, 0, 1, 1,0,1,1 );
 
-const chunkSize = new THREE.Vector3(8,8,8)
+const chunkSize = new THREE.Vector3(32,32,32)
 
 const mapSize = new THREE.Vector3(64,64,64)
 
 let map = new VoxelMap(chunkSize,mapSize)
 
 let mat = new THREE.MeshPhongMaterial({
-  color:"green",
+  color:"#9c886a",
   side:THREE.DoubleSide,
 })
 
 let meshes = map.getObjects(mat)
 
-console.log(meshes)
+// console.log(meshes)
 
 let tool = new Tool()
 
 let toolMat = new THREE.MeshPhongMaterial({
-  color:"red",
-  side:THREE.DoubleSide,
+  color:0x7d7d7d,
+  side:THREE.FrontSide,
+
 })
 
 let toolMesh = tool.toMesh(toolMat)
@@ -39,27 +40,36 @@ let toolI = 0
 
 let toolPath = new Array(2048).fill().map((_,i) => {
   return new THREE.Vector3(
-    Math.cos(i * Math.PI * 2 / 64)*(mapSize.x/2)+(mapSize.x/2),
-    mapSize.y+2,
-    Math.sin(i * Math.PI * 2 / 64)*(mapSize.z/2)+(mapSize.z/2),
+    Math.cos(i * Math.PI * 2 / 64)*(mapSize.x/4)+(mapSize.x/4),
+    mapSize.y-2,
+    Math.sin(i * Math.PI * 2 / 64)*(mapSize.z/4)+(mapSize.z/4),
   )
 })
+
+let chunks = new THREE.Object3D({}) 
+chunks.add(...meshes)
 
 
 export async function setup(scene, camera, renderer) {
   
   scene.add(toolMesh)
-  scene.add(...meshes)
-  // scene.add(voxelMesh);
+  scene.add(chunks)
+
+  tool.setPos(toolPath[toolI])
+  // toolI = (toolI + 1) % 64
+  
+  let intersects = map.getIntersectingChunks(tool.box)
+  
+  console.log("intersects",intersects)
+
+  for (let chunk of intersects) {
+    chunk.booleanWithTool(tool)
+  }
 
 }
 
 export function draw(scene, camera, renderer) {
   
-  toolMesh.position.set(...toolPath[toolI])
-  toolI = (toolI + 1) % 64
-
-  let intersects = map.getIntersectingChunks(tool.box)
 
 
 }
