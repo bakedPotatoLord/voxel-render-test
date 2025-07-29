@@ -1,4 +1,4 @@
-import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3 } from "three";
+import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3, BoxHelper, Box3Helper } from "three";
 
 
 import ndarray from "ndarray";
@@ -10,15 +10,21 @@ import compileMesher from "greedy-mesher";
 const max_triangles = 1024;
 
 export default class Chunk {
+
+  #box = new Box3();
+
   constructor(size, pos) {
     this.width = size.x;
     this.height = size.y;
     this.depth = size.z;
     this.position = pos.multiply(size);
 
-    this.box = new Box3(
-      this.position.clone(),
-      this.position.clone().add(size)
+    this.size = size;
+
+    console.log
+    this.#box.set(
+      new Vector3(0, 0, 0),
+      size.clone()
     );
 
     this.data = new Uint8Array(this.width * this.height * this.depth);
@@ -202,9 +208,20 @@ export default class Chunk {
     return this.geo;
   }
 
+  booleanWithTool(tool) {
+    
+    let posDiff = this.position.clone().sub(tool.position)
+
+
+
+  }
+
   toObject(material) {
     let mesh = new Mesh(this.mesh(), material);
     mesh.position.set(this.position.x, this.position.y, this.position.z);
+    const boxHelper = new Box3Helper(new Box3(new Vector3(0, 0, 0), this.size), 0xffff00);
+    mesh.add(boxHelper);
+    this.meshObject = mesh
     return mesh;
   }
 
@@ -218,6 +235,14 @@ export default class Chunk {
 
   getMap(){
     return this.map
+  }
+
+  get box() {
+    
+    return this.#box.set(
+      this.position,
+      this.position.clone().add(this.size)
+    )
   }
 
   get count() {

@@ -1,20 +1,22 @@
-import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute } from "three";
+import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute, BoxHelper } from "three";
 import * as THREE from "three";
 
 export default class Tool {
+
+  #box = new Box3();
+
   constructor() {
     this.height = 20
 
-    this.pos = new Vector3(0,0,0)
+    this.position = new Vector3(0,0,0) // bottom 0-0 corner of tool
 
-    this.box = new Box3(new THREE.Vector3(-this.width / 2, 0, -this.width / 2), new THREE.Vector3(this.width / 2, this.height, this.width / 2))
 
-    this.widthFunc= (y)=>{
+    this.radiusFunc= (y)=>{
       //takes real height value
-      if(y>10) return 10;
-      return Math.sin(y)+10
+      if(y>10) return 3;
+      return 3
     };
-    
+    this.maxWidth = 10
   }
 
   toMesh(material){ 
@@ -29,7 +31,7 @@ export default class Tool {
 
     for (let i = 0; i <= ySegs; i++) { //iterate over y segs
 
-      let radius = this.widthFunc(i);
+      let radius = this.radiusFunc(i);
       if(!lastRadius){
         lastRadius = radius;
         continue;
@@ -57,68 +59,116 @@ export default class Tool {
         vertices.push(bx, aby, bz);
         vertices.push(cx, cdy, cz);
 
-        vertices.push(cx, cdy, cz);
-        vertices.push(dx, cdy, dz);
         vertices.push(bx, aby, bz);
+        vertices.push(dx, cdy, dz);
+        vertices.push(cx, cdy, cz);
       } 
-
-      let startT,
-        startB
-
-      let lastT
-      let lastB
-
-      let topRadius = this.widthFunc(0)
-
-      let bottomRadius = this.widthFunc(ySegs)
-
-      //make top and bottom
-      for(let j =0; j<1;j+=revSeg){
-
-        //x and z from top
-        let tx = topRadius * Math.cos(j * Math.PI * 2);
-        let tz = topRadius * Math.sin(j * Math.PI * 2);
-
-        //x and z from bottom
-        let bx = bottomRadius * Math.cos(j * Math.PI * 2);
-        let bz = bottomRadius * Math.sin(j * Math.PI * 2);
-        
-        if(!startT) {
-          startT = new THREE.Vector3(tx, i, tz);
-          startB = new THREE.Vector3(bx, i, bz);
-        }else if(!lastT){
-          lastT = new THREE.Vector3(tx, i, tz);
-          lastB = new THREE.Vector3(bx, i, bz);
-        }else{
-          //if enough for a triangle
-
-          //for top
-          vertices.push(startT.x, startT.y, startT.z);
-          vertices.push(lastT.x, lastT.y, lastT.z);
-          vertices.push(tx, i, tz);
-          lastT.setX(tx);
-          lastT.setZ(tz);
-
-          //for bottom
-          vertices.push(startB.x, startB.y, startB.z);
-          vertices.push(bx, i, bz);
-          vertices.push(lastB.x, lastB.y, lastB.z);
-          lastB.setX(bx);
-          lastB.setZ(bz);
-        }
-
-
-      } 
-
       lastRadius = radius;
     }
+
+    // top and bottom vars
+    let startT,
+      startB
+    let lastT
+    let lastB
+
+    let topRadius = this.radiusFunc(0)
+
+    let bottomRadius = this.radiusFunc(ySegs)
+
+    //make top and bottom
+    for(let j =0; j<1;j+=revSeg){
+
+      //x and z from top
+      let tx = topRadius * Math.cos(j * Math.PI * 2);
+      let tz = topRadius * Math.sin(j * Math.PI * 2);
+
+      //x and z from bottom
+      let bx = bottomRadius * Math.cos(j * Math.PI * 2);
+      let bz = bottomRadius * Math.sin(j * Math.PI * 2);
+      
+      if(!startT) {
+        startT = new THREE.Vector3(tx, 0, tz);
+        startB = new THREE.Vector3(bx, ySegs, bz);
+      }else if(!lastT){
+        lastT = new THREE.Vector3(tx, 0, tz);
+        lastB = new THREE.Vector3(bx, ySegs, bz);
+      }else{
+        //if enough for a triangle
+
+        //for top
+        vertices.push(startT.x, startT.y, startT.z);
+        vertices.push(lastT.x, lastT.y, lastT.z);
+        vertices.push(tx, 0, tz);
+        lastT.setX(tx);
+        lastT.setZ(tz);
+
+        //for bottom
+        vertices.push(startB.x, startB.y, startB.z);
+        vertices.push(bx, ySegs, bz);
+        vertices.push(lastB.x, lastB.y, lastB.z);
+        lastB.setX(bx);
+        lastB.setZ(bz);
+      }
+    } 
 
     geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
 
-    return new Mesh(geometry, material);
+    this.mesh = new Mesh(geometry, material)
+
+    let helper = new BoxHelper(this.mesh, 0xFF0000);
+    this.mesh.add(helper);
+
+    return this.mesh;
 
   }
 
+  generateMatrix() {
+    this.data = new Uint8Array(this.width * this.height * this.width);
+    this.arr = new ndarray(this.data, [this.width, this.height, this.width], [1, this.width, this.width * this.height],0);
+    let center = this.maxWidth>>1;
+
+    for(let y= 0; y<this.height; y++){
+      for(let x= 0; x<this.width; x++){
+        for(let z= 0; z<this.width; z++){
+          
+          //check if inside radius
+          const inRadius = math.hypot(
+            (x-center),
+            (z-center),
+          ) < this.widthFunc(y)
+
+          const val = inRadius ? 1:0
+          this.arr.set(x, y, z, val)
+        }
+      }
+    }
+  }
+
+  setPos(pos) {
+    this.position.set(...pos);
+    this.mesh.position.set(...pos);
+  }
+
+  get box() {
+    
+    return this.#box.set(
+      this.position,
+      this.position.clone().add({
+        x: this.maxWidth,
+        y: this.height,
+        z: this.maxWidth
+      })
+    )
+  }
+
+  get center(){
+    return this.position.clone().add({
+      x: this.maxWidth/2,
+      y: this.height/2,
+      z: this.maxWidth/2
+    })
+  }
   
 }
