@@ -1,4 +1,5 @@
-import { BufferGeometry, BufferAttribute, Mesh } from "three";
+import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3 } from "three";
+
 
 import ndarray from "ndarray";
 
@@ -14,6 +15,11 @@ export default class Chunk {
     this.height = size.y;
     this.depth = size.z;
     this.position = pos.multiply(size);
+
+    this.box = new Box3(
+      this.position.clone(),
+      this.position.clone().add(size)
+    );
 
     this.data = new Uint8Array(this.width * this.height * this.depth);
     this.arr = new ndarray(this.data, [this.width, this.height, this.depth], [1, this.width, this.width * this.height],0);
@@ -187,6 +193,10 @@ export default class Chunk {
     this.geo.setAttribute("uv", new BufferAttribute(uvsView, 2));
 
     this.geo.computeVertexNormals();
+
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.normal.needsUpdate = true;
+    this.geo.attributes.uv.needsUpdate = true;
 
     // console.log(verts)
     return this.geo;
