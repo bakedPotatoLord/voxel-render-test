@@ -13,7 +13,7 @@ textureMap.matrix.setUvTransform(0, 0, 1, 1,0,1,1 );
 
 const chunkSize = new THREE.Vector3(32,32,32)
 
-const mapSize = new THREE.Vector3(64,64,64)
+const mapSize = new THREE.Vector3(128,128,128)
 
 let map = new VoxelMap(chunkSize,mapSize)
 
@@ -31,7 +31,8 @@ let tool = new Tool()
 let toolMat = new THREE.MeshPhongMaterial({
   color:0x7d7d7d,
   side:THREE.FrontSide,
-
+  transparent: true,
+  opacity: 0.8
 })
 
 let toolMesh = tool.toMesh(toolMat)
@@ -55,8 +56,13 @@ export async function setup(scene, camera, renderer) {
   scene.add(toolMesh)
   scene.add(chunks)
 
-  tool.setPos(toolPath[toolI])
+  // tool.setPos(toolPath[toolI])
   // toolI = (toolI + 1) % 64
+  tool.setPos(new THREE.Vector3(
+    8,
+    100,
+    8,
+  ))
   
   let intersects = map.getIntersectingChunks(tool.box)
   
@@ -65,6 +71,12 @@ export async function setup(scene, camera, renderer) {
   for (let chunk of intersects) {
     chunk.booleanWithTool(tool)
   }
+
+  intersects.forEach((chunk) => {
+    chunk.mesh()
+  })
+
+  console.log(scene)
 
 }
 

@@ -37,8 +37,11 @@ export default class Chunk {
 
     //for greedy meshing
     this.i = 0
-    this.points = new Uint16Array(max_triangles * 3),
+    this.points = new Float32Array(max_triangles * 3),
     this.uvs = new Uint8Array(max_triangles * 2);
+
+    this.pointsBuffer = new BufferAttribute(this.points, 3);
+    this.uvsBuffer = new BufferAttribute(this.uvs, 2);
 
     this.mesher = compileMesher({
       extraArgs: 1,
@@ -190,13 +193,21 @@ export default class Chunk {
    * @returns {BufferGeometry} The computed mesh.
    */
   mesh() {
+
+    this.i = 0
+    //mesher sets i and buffers
     this.mesher(this.arr, []);
 
-    let pointsView = this.points.subarray(0,this.i);
-    let uvsView = this.uvs.subarray(0,(this.i<<1)/3);
+    this.pointsBuffer.clearUpdateRanges();
+    this.pointsBuffer.addUpdateRange(0, this.i);
 
-    this.geo.setAttribute("position", new BufferAttribute(pointsView, 3));
-    this.geo.setAttribute("uv", new BufferAttribute(uvsView, 2));
+    this.uvsBuffer.clearUpdateRanges();
+    this.uvsBuffer.addUpdateRange(0, (this.i<<1)/3);
+
+    
+
+    this.geo.setAttribute("position", this.pointsBuffer);
+    this.geo.setAttribute("uv", this.uvsBuffer);
 
     this.geo.computeVertexNormals();
 
@@ -209,10 +220,34 @@ export default class Chunk {
   }
 
   booleanWithTool(tool) {
-    
-    let posDiff = this.position.clone().sub(tool.position)
+    let toolBase = tool.box.min.clone()
 
+    //iterate through all tool voxels relative to origin
+    for(let y= 0; y < tool.height; y++){
+    let radius = tool.radiusFunc(y)
+      for(let x= 0; x < tool.maxRadius<<1; x++){
+          for(let z= 0; z < tool.maxRadius<<1; z++){
+          // break if outside circle
+          if(Math.hypot(
+            (x-tool.maxRadius),
+            (z-tool.maxRadius),
+          ) > radius){
+            continue
+          }
+          //convert to global origin
+          let lookFor= toolBase.clone().add({x,y,z})
+          //check if inside chunk's global relative bounds
+          if(this.containsPointStrict(lookFor)){
+            //convert from global origin to chunk origin
+            let toCut = lookFor.sub(this.position)
+            //cut
+            this.setVoxel(toCut.x, toCut.y, toCut.z, 0)
+          }
+        }
 
+      }
+    }
+      
 
   }
 
@@ -235,6 +270,14 @@ export default class Chunk {
 
   getMap(){
     return this.map
+  }
+
+   containsPointStrict( point) {
+    return(
+      point.x >= this.#box.min.x && point.x < this.#box.max.x &&
+      point.y >= this.#box.min.y && point.y < this.#box.max.y &&
+      point.z >= this.#box.min.z && point.z < this.#box.max.z
+    );
   }
 
   get box() {

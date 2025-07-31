@@ -1,22 +1,20 @@
 import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute, BoxHelper } from "three";
 import * as THREE from "three";
+import ndarray from "ndarray";
 
 export default class Tool {
 
   #box = new Box3();
 
   constructor() {
-    this.height = 20
-
-    this.position = new Vector3(0,0,0) // bottom 0-0 corner of tool
-
-
+    this.height = 30
+    this.position = new Vector3(0,0,0) // bottom center of tool
+    //takes tool-relative y and returns radius
     this.radiusFunc= (y)=>{
-      //takes real height value
-      if(y>10) return 3;
-      return 3
+      return 10
     };
-    this.maxWidth = 10
+    this.maxRadius = 10
+    this.generateMatrix()
   }
 
   toMesh(material){ 
@@ -25,7 +23,7 @@ export default class Tool {
     const revSegments = 64; // Number of segments for the revolution
     const revSeg = 1/revSegments;
 
-    const ySegs = 20;
+    const ySegs = this.height;
 
     let lastRadius;
 
@@ -127,12 +125,10 @@ export default class Tool {
   generateMatrix() {
     this.data = new Uint8Array(this.width * this.height * this.width);
     this.arr = new ndarray(this.data, [this.width, this.height, this.width], [1, this.width, this.width * this.height],0);
-    let center = this.maxWidth>>1;
-
+    let center = this.maxRadius>>1;
     for(let y= 0; y<this.height; y++){
       for(let x= 0; x<this.width; x++){
         for(let z= 0; z<this.width; z++){
-          
           //check if inside radius
           const inRadius = math.hypot(
             (x-center),
@@ -152,22 +148,25 @@ export default class Tool {
   }
 
   get box() {
-    
     return this.#box.set(
-      this.position,
+      this.position.clone().sub({
+        x: this.maxRadius,
+        y: 0,
+        z: this.maxRadius
+      }),
       this.position.clone().add({
-        x: this.maxWidth,
+        x: this.maxRadius,
         y: this.height,
-        z: this.maxWidth
+        z: this.maxRadius
       })
     )
   }
 
   get center(){
     return this.position.clone().add({
-      x: this.maxWidth/2,
+      x: this.maxRadius/2,
       y: this.height/2,
-      z: this.maxWidth/2
+      z: this.maxRadius/2
     })
   }
   
