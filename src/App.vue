@@ -2,14 +2,14 @@
 
 import { onMounted, ref } from 'vue'
 import * as THREE from 'three'
-import { draw, setup } from './anim';
+import { draw, setup, pause, unpause, step, stepBack } from './anim';
 import  { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/addons/libs/stats.module.js';
 
 const canvas = ref(null)
 
 
-
+const stats = ref(null)
 
 
 
@@ -77,11 +77,29 @@ onMounted(async () => {
   <div>
 
     <canvas ref="canvas"></canvas>
+    <div class="controls">
+      <button @click="unpause">play</button>
+      <button @click="pause">pause</button>
+      <button @click="step">step</button>
+      <button @click="stepBack">stepBack</button>
+    </div>
+    <div class="stats" ref="stats"></div>
   </div>
 </template>
 
 <style scoped>
 canvas {
   border: 2px solid black
+}
+
+.controls{
+  display:flex;
+  
+}
+
+.controls button{
+  padding: 0.5rem;
+  size:1rem;
+  margin-right:1rem;
 }
 </style>

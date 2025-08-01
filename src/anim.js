@@ -8,25 +8,19 @@ import Tool from "./Tool";
 
 let textureLoader =  new THREE.TextureLoader()
 let textureMap = await textureLoader.loadAsync(texture)
-
 textureMap.matrix.setUvTransform(0, 0, 1, 1,0,1,1 );
 
 const chunkSize = new THREE.Vector3(32,32,32)
-
 const mapSize = new THREE.Vector3(128,128,128)
-
 let map = new VoxelMap(chunkSize,mapSize)
+let tool = new Tool()
 
-let mat = new THREE.MeshPhongMaterial({
+let voxelMaterial = new THREE.MeshPhongMaterial({
   color:"#9c886a",
   side:THREE.DoubleSide,
 })
 
-let meshes = map.getObjects(mat)
-
-// console.log(meshes)
-
-let tool = new Tool()
+let meshes = map.getObjects(voxelMaterial)
 
 let toolMat = new THREE.MeshPhongMaterial({
   color:0x7d7d7d,
@@ -39,49 +33,76 @@ let toolMesh = tool.toMesh(toolMat)
 
 let toolI = 0
 
-let toolPath = new Array(2048).fill().map((_,i) => {
+let toolPath = new Array(128).fill().map((_,i) => {
   return new THREE.Vector3(
-    Math.cos(i * Math.PI * 2 / 64)*(mapSize.x/4)+(mapSize.x/4),
-    mapSize.y-2,
-    Math.sin(i * Math.PI * 2 / 64)*(mapSize.z/4)+(mapSize.z/4),
+    Math.cos(i * Math.PI * 2 / 128)*(mapSize.x/3)+(mapSize.x/2),
+    mapSize.y-20,
+    Math.sin(i * Math.PI * 2 / 128)*(mapSize.z/4)+(mapSize.z/2),
   )
 })
 
-let chunks = new THREE.Object3D({}) 
-chunks.add(...meshes)
+let paused = false
+
+export function pause(){
+  paused = true;
+} 
+
+export function unpause(){
+  paused = false;
+}
+
+export function step(){
+  if(paused){
+    toolI = (toolI + 1) % 128
+    tool.setPos(toolPath.at(toolI))
+    updateChunks()
+  }
+}
+
+export function stepBack(){
+  if(paused){
+    toolI = (toolI - 1) % 128
+    // console.log(toolPath,toolI)
+    tool.setPos(toolPath.at(toolI))
+    updateChunks()
+  }
+}
+
+function updateChunks(){
+  let intersects = map.getIntersectingChunks(tool.box)
+ 
+  if(paused){
+    console.log(intersects,tool)
+  }
+  for (let chunk of intersects) {
+    chunk.booleanWithTool(tool)
+  }
+  intersects.forEach((chunk) => {
+    chunk.mesh()
+  })
+}
 
 
 export async function setup(scene, camera, renderer) {
   
+  let chunks = new THREE.Object3D({}) 
+  chunks.add(...meshes)
   scene.add(toolMesh)
   scene.add(chunks)
 
-  // tool.setPos(toolPath[toolI])
-  // toolI = (toolI + 1) % 64
   tool.setPos(new THREE.Vector3(
-    8,
-    100,
-    8,
+    70.26050024342877,
+    108,
+    95.653648318873,
   ))
   
-  let intersects = map.getIntersectingChunks(tool.box)
-  
-  console.log("intersects",intersects)
-
-  for (let chunk of intersects) {
-    chunk.booleanWithTool(tool)
-  }
-
-  intersects.forEach((chunk) => {
-    chunk.mesh()
-  })
-
-  console.log(scene)
-
+  updateChunks()
 }
 
 export function draw(scene, camera, renderer) {
-  
-
-
+  if(!paused){
+    toolI = (toolI +127) % 128
+    tool.setPos(toolPath[toolI])
+    updateChunks()
+  }
 }
