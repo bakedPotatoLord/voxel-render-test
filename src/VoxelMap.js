@@ -24,9 +24,7 @@ export default class VoxelMap {
     }
 
     let chunkCount = this.numChunks.x * this.numChunks.y * this.numChunks.z;
-
     this.chunks = Array(chunkCount);
-
     this.toUpdate = [];
 
     //init all chunks
@@ -34,7 +32,7 @@ export default class VoxelMap {
       for (let y = 0; y < this.numChunks.y; y++) {
         for (let z = 0; z < this.numChunks.z; z++) {
           const index =
-            x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.z;
+            x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.x;
           let chunk = (this.chunks[index] = new Chunk(
             chunkSize,
             new Vector3(x, y, z)
