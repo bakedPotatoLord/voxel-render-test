@@ -1,4 +1,4 @@
-import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3, BoxHelper, Box3Helper } from "three";
+import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3, BoxHelper, Box3Helper, Vector2 } from "three";
 
 
 import ndarray from "ndarray";
@@ -7,7 +7,7 @@ import compileMesher from "greedy-mesher";
 
 
 
-const max_triangles = 1024;
+const max_triangles = 4096<<1;
 
 export default class Chunk {
 
@@ -27,8 +27,10 @@ export default class Chunk {
       size.clone()
     );
 
+    // console.log(this.size, this.width, this.height, this.depth)
+
     this.data = new Uint8Array(this.width * this.height * this.depth);
-    this.arr = new ndarray(this.data, [this.width, this.height, this.depth], [1, this.width, this.width * this.height],0);
+    this.arr = new ndarray(this.data, [this.width, this.height, this.depth], [this.height * this.depth, this.depth, 1],0);
 
     this.geo = new BufferGeometry();
 
@@ -60,6 +62,15 @@ export default class Chunk {
   }
 
   setVoxel(x, y, z, value) {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
+      console.warn("non-integer voxel write!", toCut)
+    }
+
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height || z < 0 || z >= this.depth) {
+      console.warn("out of bounds voxel write!", x, y, z)
+      return
+    }
+
     this.arr.set(x, y, z, value);
   }
 
@@ -220,35 +231,44 @@ export default class Chunk {
   }
 
   booleanWithTool(tool) {
-    let toolBase = tool.box.min.clone()
+    let toolBox = tool.box.clone()
+    let toolCenter = tool.position.clone()
+
+    let {min:toolLow,max:toolHigh} = toolBox
+    
+    toolLow.floor()
+    toolHigh.floor()
+
+    //intersect vectors are all integers
+    let intersect = toolBox.intersect(this.box)
+
+    // intersect.min.sub(new Vector3(1,1,1))
+    // intersect.max.add(new Vector3(1,1,1))
+
+    // console.log(this.box,intersect)
+  
 
     //iterate through all tool voxels relative to origin
-    for(let y= 0; y < tool.height; y++){
-    let radius = tool.radiusFunc(y)
-      for(let x= 0; x < tool.maxRadius<<1; x++){
-          for(let z= 0; z < tool.maxRadius<<1; z++){
+    for(let y= intersect.min.y; y < intersect.max.y; y++){
+    let radius = 10
+      for(let x= intersect.min.x; x < intersect.max.x; x++){
+          for(let z= intersect.min.z; z < intersect.max.z; z++){
           // break if outside circle
-          if(Math.hypot(
-            (x-tool.maxRadius),
-            (z-tool.maxRadius),
-          ) > radius){
+          if(
+            Math.hypot(
+              (z-toolCenter.z),
+              (x-toolCenter.x),
+            ) > radius 
+          ){
             continue
           }
-          //convert to global origin
-          let lookFor= toolBase.clone().add({x,y,z})
-          //check if inside chunk's global relative bounds
-          if(this.containsPointStrict(lookFor)){
-            //convert from global origin to chunk origin
-            let toCut = lookFor.sub(this.position)
-            //cut
-            this.setVoxel(toCut.x, toCut.y, toCut.z, 0)
-          }
+          //convert from global origin to chunk origin
+          let toCut = new Vector3(x,y,z).sub(this.position)
+          //cut
+          this.setVoxel(toCut.x, toCut.y, toCut.z, 0)
         }
-
       }
     }
-      
-
   }
 
   toObject(material) {
@@ -270,14 +290,6 @@ export default class Chunk {
 
   getMap(){
     return this.map
-  }
-
-   containsPointStrict( point) {
-    return(
-      point.x >= this.#box.min.x && point.x < this.#box.max.x &&
-      point.y >= this.#box.min.y && point.y < this.#box.max.y &&
-      point.z >= this.#box.min.z && point.z < this.#box.max.z
-    );
   }
 
   get box() {
