@@ -37,7 +37,7 @@ let toolPath = new Array(128).fill().map((_,i) => {
   return new THREE.Vector3(
     Math.cos(i * Math.PI * 2 / 128)*(mapSize.x/3)+(mapSize.x/2),
     mapSize.y-20,
-    Math.sin(i * Math.PI * 2 / 128)*(mapSize.z/4)+(mapSize.z/2),
+    Math.sin(i * Math.PI * 2 / 128)*(mapSize.z/3)+(mapSize.z/2),
   )
 })
 
@@ -89,19 +89,12 @@ export async function setup(scene, camera, renderer) {
   chunks.add(...meshes)
   scene.add(toolMesh)
   scene.add(chunks)
-
-  tool.setPos(new THREE.Vector3(
-    70.26050024342877,
-    108,
-    95.653648318873,
-  ))
   
-  updateChunks()
 }
 
 export function draw(scene, camera, renderer) {
   if(!paused){
-    toolI = (toolI +127) % 128
+    toolI = (toolI +1) % 128
     tool.setPos(toolPath[toolI])
     updateChunks()
   }
