@@ -143,12 +143,16 @@ export default class Tool {
   }
 
   setPos(pos) {
-    this.position.set(...pos);
-    this.mesh.position.set(...pos);
+    // console.log(pos)
+    if(typeof pos.x!= 'number' || typeof pos.y!= 'number' || typeof pos.z!= 'number' ){
+      console.log("invalid pos",pos)
+    }
+    this.position.set(pos.x, pos.y, pos.z);
+    this.mesh.position.set(pos.x, pos.y, pos.z);
   }
 
   get box() {
-    return this.#box.set(
+    return new Box3(
       this.position.clone().sub({
         x: this.maxRadius,
         y: 0,
