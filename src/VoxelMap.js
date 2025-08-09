@@ -65,15 +65,6 @@ export default class VoxelMap {
     }
   }
 
-  getChunk(x, y, z) {
-    const index =
-      x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.z;
-    return Boolean(this.chunks[index]);
-  }
-
-  getGeometries() {
-    return this.chunks.map((chunk) => chunk.toMesh());
-  }
 
   getObjects(material) {
     return this.chunks.map((chunk) => chunk.toObject(material));
