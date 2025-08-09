@@ -166,5 +166,139 @@ export default class Tool {
       }).floor(),
     )
   }
+
+  /**
+   * Compute swept AABB for tool movement between two positions
+   */
+  computeSweptAABB(start, end, mapBounds) {
+    const startBox = new Box3(
+      new Vector3(start.x - this.maxRadius, start.y, start.z - this.maxRadius),
+      new Vector3(start.x + this.maxRadius, start.y + this.height, start.z + this.maxRadius)
+    );
+    const endBox = new Box3(
+      new Vector3(end.x - this.maxRadius, end.y, end.z - this.maxRadius),
+      new Vector3(end.x + this.maxRadius, end.y + this.height, end.z + this.maxRadius)
+    );
+    
+    const sweepMin = new Vector3(
+      Math.min(startBox.min.x, endBox.min.x),
+      Math.min(startBox.min.y, endBox.min.y),
+      Math.min(startBox.min.z, endBox.min.z)
+    );
+    const sweepMax = new Vector3(
+      Math.max(startBox.max.x, endBox.max.x),
+      Math.max(startBox.max.y, endBox.max.y),
+      Math.max(startBox.max.z, endBox.max.z)
+    );
+
+    // Clamp to map bounds if provided
+    if (mapBounds) {
+      sweepMin.x = Math.max(0, sweepMin.x);
+      sweepMin.y = Math.max(0, sweepMin.y);
+      sweepMin.z = Math.max(0, sweepMin.z);
+      sweepMax.x = Math.min(mapBounds.x, sweepMax.x);
+      sweepMax.y = Math.min(mapBounds.y, sweepMax.y);
+      sweepMax.z = Math.min(mapBounds.z, sweepMax.z);
+    }
+
+    return { sweepMin, sweepMax };
+  }
+
+  /**
+   * Test if a voxel should be cut by the swept tool
+   */
+  testVoxelInSweptPath(voxelPos, start, end) {
+    const eps = 1e-9;
+    const d = new Vector3().subVectors(end, start);
+    const dx = d.x, dy = d.y, dz = d.z;
+    
+    // Determine valid t-interval for localY
+    let tLo = 0, tHi = 1;
+    if (Math.abs(dy) < 1e-12) {
+      // dy == 0: localY is constant
+      const localYConst = voxelPos.y - start.y;
+      if (localYConst < 0 || localYConst > this.height) return false;
+    } else {
+      // dy != 0: solve for t range
+      const t1 = (voxelPos.y - start.y - this.height) / dy;
+      const t2 = (voxelPos.y - start.y) / dy;
+      const tMin = Math.min(t1, t2);
+      const tMax = Math.max(t1, t2);
+      tLo = Math.max(0, tMin);
+      tHi = Math.min(1, tMax);
+      if (tLo >= tHi) return false;
+    }
+
+    // Collect t-breakpoints
+    const tBreaks = [tLo, tHi];
+    if (Math.abs(dy) > 1e-12) {
+      for (let yy = 0; yy <= this.height; yy++) {
+        const tAtY = (voxelPos.y - start.y - yy) / dy;
+        if (tAtY > tLo + 1e-12 && tAtY < tHi - 1e-12) {
+          tBreaks.push(tAtY);
+        }
+      }
+    }
+    
+    // Sort and remove duplicates
+    tBreaks.sort((a, b) => a - b);
+    const cleaned = [];
+    for (let val of tBreaks) {
+      if (cleaned.length === 0 || Math.abs(val - cleaned[cleaned.length - 1]) > 1e-9) {
+        cleaned.push(val);
+      }
+    }
+
+    // Quadratic coefficients for horizontal squared distance
+    const A = dx * dx + dz * dz;
+    const B = 2 * ((start.x - voxelPos.x) * dx + (start.z - voxelPos.z) * dz);
+    const C = (voxelPos.x - start.x) * (voxelPos.x - start.x) + (voxelPos.z - start.z) * (voxelPos.z - start.z);
+
+    // Test each subinterval
+    for (let bi = 0; bi < cleaned.length - 1; bi++) {
+      const ta = cleaned[bi];
+      const tb = cleaned[bi + 1];
+      if (tb <= ta) continue;
+
+      // Determine conservative r_max on [ta,tb]
+      const localYa = voxelPos.y - (start.y + ta * dy);
+      const localYb = voxelPos.y - (start.y + tb * dy);
+      const localYm = voxelPos.y - (start.y + ((ta + tb) * 0.5) * dy);
+      
+      const ra = this.radiusFunc(localYa);
+      const rb = this.radiusFunc(localYb);
+      const rm = this.radiusFunc(localYm);
+      const rMax = Math.max(ra, rb, rm);
+
+      // Test if Dist^2(t) - rMax^2 <= 0 for some t in [ta,tb]
+      const Cprime = C - rMax * rMax;
+
+      if (Math.abs(A) < 1e-12) {
+        // Linear case
+        const gta = B * ta + Cprime;
+        const gtb = B * tb + Cprime;
+        if (gta <= 0 || gtb <= 0 || (gta > 0 && gtb < 0) || (gta < 0 && gtb > 0)) {
+          return true;
+        }
+      } else {
+        // Quadratic case
+        const tStar = -B / (2 * A);
+        const evalAt = (t) => A * t * t + B * t + Cprime;
+        
+        const gta = evalAt(ta);
+        const gtb = evalAt(tb);
+        let gmin = Math.min(gta, gtb);
+        
+        if (tStar >= ta && tStar <= tb) {
+          const gst = evalAt(tStar);
+          gmin = Math.min(gmin, gst);
+        }
+        
+        if (gmin <= 0) return true;
+      }
+    }
+    
+    return false;
+  }
   
 }

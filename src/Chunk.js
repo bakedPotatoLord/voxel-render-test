@@ -288,4 +288,53 @@ export default class Chunk {
   get count() {
     return this.data.length;
   }
+
+  /**
+   * Compute voxel iteration bounds within this chunk for a given sweep box
+   */
+  computeVoxelBounds(sweepMin, sweepMax) {
+    return {
+      vminX: Math.max(0, Math.floor(sweepMin.x - this.position.x)),
+      vmaxX: Math.min(this.width - 1, Math.floor(sweepMax.x - this.position.x)),
+      vminY: Math.max(0, Math.floor(sweepMin.y - this.position.y)),
+      vmaxY: Math.min(this.height - 1, Math.floor(sweepMax.y - this.position.y)),
+      vminZ: Math.max(0, Math.floor(sweepMin.z - this.position.z)),
+      vmaxZ: Math.min(this.depth - 1, Math.floor(sweepMax.z - this.position.z))
+    };
+  }
+
+  /**
+   * Process voxels in this chunk for swept tool cutting
+   */
+  processSweptToolCut(tool, start, end, sweepBounds) {
+    const { sweepMin, sweepMax } = sweepBounds;
+    
+    // Quick AABB intersection test
+    if (!this.box.intersectsBox(new Box3(sweepMin.clone(), sweepMax.clone()))) {
+      return false;
+    }
+
+    const voxelBounds = this.computeVoxelBounds(sweepMin, sweepMax);
+    let chunkModified = false;
+    
+    for (let vx = voxelBounds.vminX; vx <= voxelBounds.vmaxX; vx++) {
+      for (let vy = voxelBounds.vminY; vy <= voxelBounds.vmaxY; vy++) {
+        for (let vz = voxelBounds.vminZ; vz <= voxelBounds.vmaxZ; vz++) {
+          // Global voxel center coordinates (use center at +0.5)
+          const voxelPos = new Vector3(
+            this.position.x + vx + 0.5,
+            this.position.y + vy + 0.5,
+            this.position.z + vz + 0.5
+          );
+          
+          if (tool.testVoxelInSweptPath(voxelPos, start, end)) {
+            this.setVoxel(vx, vy, vz, 0);
+            chunkModified = true;
+          }
+        }
+      }
+    }
+    
+    return chunkModified;
+  }
 }
