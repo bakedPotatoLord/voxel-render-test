@@ -66,6 +66,11 @@ export default class VoxelMap {
   }
 
 
+  getChunk(x,y,z){
+    return this.chunks[x + y * this.numChunks.x + z * this.numChunks.y * this.numChunks.x]
+  }
+
+
   getObjects(material) {
     return this.chunks.map((chunk) => chunk.toObject(material));
   }

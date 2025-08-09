@@ -126,18 +126,11 @@ function cutPath(start, end) {
   maxChunkIdx.y = Math.max(0, Math.min(maxChunkIdx.y, map.numChunks.y - 1));
   maxChunkIdx.z = Math.max(0, Math.min(maxChunkIdx.z, map.numChunks.z - 1));
 
-  // Helper: convert chunk indices to single index used in map.chunks
-  function chunkIndex(cx, cy, cz) {
-    return cx + cy * map.numChunks.x + cz * map.numChunks.y * map.numChunks.x;
-  }
-
   // Process each candidate chunk using Chunk's method
   for (let cx = minChunkIdx.x; cx <= maxChunkIdx.x; cx++) {
     for (let cy = minChunkIdx.y; cy <= maxChunkIdx.y; cy++) {
       for (let cz = minChunkIdx.z; cz <= maxChunkIdx.z; cz++) {
-        const idx = chunkIndex(cx, cy, cz);
-        const chunk = map.chunks[idx];
-        
+        const chunk = map.getChunk(cx, cy, cz);
         if (!chunk) continue;
         
         // Use Chunk's method to process swept tool cutting
