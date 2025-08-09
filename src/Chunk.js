@@ -7,7 +7,7 @@ import compileMesher from "greedy-mesher";
 
 
 
-const max_triangles = 4096<<1;
+const max_triangles = 4096<<2;
 
 export default class Chunk {
 
@@ -215,7 +215,7 @@ export default class Chunk {
     this.uvsBuffer.clearUpdateRanges();
     this.uvsBuffer.addUpdateRange(0, (this.i<<1)/3);
 
-    
+    this.geo.name = "chunk"+this.position.toString();
 
     this.geo.setAttribute("position", this.pointsBuffer);
     this.geo.setAttribute("uv", this.uvsBuffer);
@@ -230,21 +230,15 @@ export default class Chunk {
     return this.geo;
   }
 
-  booleanWithTool(tool) {
-    let toolBox = tool.box.clone()
+  booleanWithTool(tool, box) {
     let toolCenter = tool.position.clone()
-
-    let {min:toolLow,max:toolHigh} = toolBox
-    
-
-    //intersect vectors are all integers
-    let intersect = toolBox.intersect(this.box)
+    const {min,max} = box;
 
     //iterate through all tool voxels relative to origin
-    for(let y= intersect.min.y; y < intersect.max.y; y++){
-    let radius = 10
-      for(let x= intersect.min.x; x < intersect.max.x; x++){
-          for(let z= intersect.min.z; z < intersect.max.z; z++){
+    for(let y= min.y; y <= max.y; y++){
+    let radius = tool.radiusFunc(y-toolCenter.y)
+      for(let x= min.x; x <= max.x; x++){
+          for(let z= min.z; z <= max.z; z++){
           // break if outside circle
           if(
             Math.hypot(
@@ -257,6 +251,7 @@ export default class Chunk {
           //convert from global origin to chunk origin
           let toCut = new Vector3(x,y,z).sub(this.position)
           //cut
+          // console.log(toCut)
           this.setVoxel(toCut.x, toCut.y, toCut.z, 0)
         }
       }
@@ -285,10 +280,9 @@ export default class Chunk {
   }
 
   get box() {
-    
-    return this.#box.set(
-      this.position,
-      this.position.clone().add(this.size)
+    return new Box3(
+      this.position.clone(),
+      this.position.clone().add(this.size).addScalar(-1)
     )
   }
 

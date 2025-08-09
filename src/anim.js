@@ -54,7 +54,7 @@ export function unpause(){
 export function step(){
   if(paused){
     toolI = (toolI + 1) % 128
-    tool.setPos(toolPath.at(toolI))
+    tool.position = toolPath.at(toolI)
     updateChunks()
   }
 }
@@ -63,7 +63,7 @@ export function stepBack(){
   if(paused){
     toolI = (toolI - 1) % 128
     // console.log(toolPath,toolI)
-    tool.setPos(toolPath.at(toolI))
+    tool.position = toolPath.at(toolI)
     updateChunks()
   }
 }
@@ -71,21 +71,23 @@ export function stepBack(){
 function updateChunks(){
   
 
-  
-  
-  
-
-  // pass the tool intersection boxes to tool generators that yield voxels to cut in global space
 
   // if(paused){
   //   console.log(intersects,tool)
   // }
-  // for (let chunk of intersects) {
-  //   chunk.booleanWithTool(tool)
-  // }
-  // intersects.forEach((chunk) => {
-  //   chunk.mesh()
-  // })
+  
+  tool.position = toolPath[toolI]
+
+  let chunks = map.getIntersectingChunks(tool.box)
+ 
+  // get the tool intersection boxes in world space all at once
+  let chunkIntersects = tool.makeChunkIntersects(chunks)
+
+
+  for(let {intersect,chunk} of chunkIntersects){
+    chunk.booleanWithTool(tool,intersect)
+    chunk.mesh()
+  }
 }
 
 
@@ -95,23 +97,15 @@ export async function setup(scene, camera, renderer) {
   chunksObj.add(...meshes)
   scene.add(chunksObj)
   scene.add(toolMesh)
+  
+  
 
-
-  let chunks = map.getIntersectingChunks(tool.box)
- 
-  // get the tool intersection boxes in world space all at once
-  let chunkIntersects = tool.makeChunkIntersects(chunks)
-
-  for(let intersect of chunkIntersects){
-    
-  }
   
 }
 
 export function draw(scene, camera, renderer) {
   if(!paused){
     toolI = (toolI +1) % 128
-    tool.setPos(toolPath[toolI])
     updateChunks()
   }
 }

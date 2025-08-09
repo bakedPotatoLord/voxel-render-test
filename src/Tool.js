@@ -1,4 +1,4 @@
-import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute, BoxHelper } from "three";
+import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute, Box3Helper } from "three";
 import * as THREE from "three";
 import ndarray from "ndarray";
 
@@ -6,14 +6,21 @@ export default class Tool {
 
   #box = new Box3();
 
+  #position = new Vector3();
+
   constructor() {
     this.height = 30
-    this.position = new Vector3(0,0,0) // bottom center of tool
+    this.#position = new Vector3(0,0,0) // bottom center of tool
     //takes tool-relative y and returns radius
     this.radiusFunc= (y)=>{
+
+      if(y<15){
+        return 5
+      }
       return 10
+
     };
-    this.maxRadius = 10
+    this.maxRadius = 11
   }
 
   toMesh(material){ 
@@ -114,8 +121,11 @@ export default class Tool {
 
     this.mesh = new Mesh(geometry, material)
 
-    let helper = new BoxHelper(this.mesh, 0xFF0000);
+    let helper = new Box3Helper(this.box, 0xFF0000);
     this.mesh.add(helper);
+
+    const axesHelper = new THREE.AxesHelper( 5 );
+    this.mesh.add( axesHelper );
 
     return this.mesh;
 
@@ -123,27 +133,41 @@ export default class Tool {
 
   *makeChunkIntersects(chunks){
     for(let chunk of chunks){
-      yield this.box.intersect(chunk.box.clone())
+      yield {intersect:this.box.intersect(chunk.box.clone()), chunk}
     }
   }
 
-  *generateCutCircle(chunkBox) {
+  *generateCutCircle(box) {
+    let {min,max} = box;
+    for(let z = min.z; z <= max.z; z++){
+      for(let y = min.y; y <= max.y; y++){
+        for(let x = min.x; x <= max.x; x++){
+          yield new Vector3(x,y,z)
+        }
+      }
+
+    }
     yield h
   }
 
-  setPos(pos) {
-    this.position.set(...pos);
-    this.mesh.position.set(...pos);
+  set position(pos) {
+
+    this.#position.set(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+    this.mesh.position.set(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+  }
+
+  get position() {
+    return this.#position.clone();
   }
 
   get box() {
     return new Box3(
-      this.position.clone().sub({
+      this.position.sub({
         x: this.maxRadius,
         y: 0,
         z: this.maxRadius
       }).floor(),
-      this.position.clone().add({
+      this.position.add({
         x: this.maxRadius,
         y: this.height,
         z: this.maxRadius
