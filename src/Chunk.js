@@ -34,7 +34,7 @@ export default class Chunk {
 
     this.geo = new BufferGeometry();
 
-    this.map = null
+    // this.map = null
 
 
     //for greedy meshing
@@ -231,20 +231,20 @@ export default class Chunk {
   }
 
   booleanWithTool(tool, box) {
-    let toolCenter = tool.position.clone()
+    let toolCenter = tool.position
     const {min,max} = box;
 
     //iterate through all tool voxels relative to origin
-    for(let y= min.y; y <= max.y; y++){
+    for(let y= min.y; y < max.y; y++){
     let radius = tool.radiusFunc(y-toolCenter.y)
-      for(let x= min.x; x <= max.x; x++){
-          for(let z= min.z; z <= max.z; z++){
+      for(let x= min.x; x < max.x; x++){
+          for(let z= min.z; z < max.z; z++){
           // break if outside circle
           if(
             Math.hypot(
               (z-toolCenter.z),
               (x-toolCenter.x),
-            ) > radius 
+            ) >= radius 
           ){
             continue
           }
@@ -282,7 +282,7 @@ export default class Chunk {
   get box() {
     return new Box3(
       this.position.clone(),
-      this.position.clone().add(this.size).addScalar(-1)
+      this.position.clone().add(this.size)
     )
   }
 

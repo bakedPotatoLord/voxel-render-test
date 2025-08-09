@@ -33,13 +33,20 @@ let toolMesh = tool.toMesh(toolMat)
 
 let toolI = 0
 
-let toolPath = new Array(128).fill().map((_,i) => {
+let pathlen = 16
+
+let toolPath = new Array(pathlen).fill().map((_,i) => {
   return new THREE.Vector3(
-    Math.cos(i * Math.PI * 2 / 128)*(mapSize.x/3)+(mapSize.x/2),
+    Math.cos(i * Math.PI * 2 / pathlen)*(mapSize.x/3)+(mapSize.x/2),
     mapSize.y-20,
-    Math.sin(i * Math.PI * 2 / 128)*(mapSize.z/3)+(mapSize.z/2),
+    Math.sin(i * Math.PI * 2 / pathlen)*(mapSize.z/3)+(mapSize.z/2),
   )
 })
+
+function stepTool(){
+  toolI = (toolI + 1) % pathlen
+  tool.position = toolPath.at(toolI)
+}
 
 let paused = false
 
@@ -53,17 +60,14 @@ export function unpause(){
 
 export function step(){
   if(paused){
-    toolI = (toolI + 1) % 128
-    tool.position = toolPath.at(toolI)
+    stepTool()
     updateChunks()
   }
 }
 
 export function stepBack(){
   if(paused){
-    toolI = (toolI - 1) % 128
-    // console.log(toolPath,toolI)
-    tool.position = toolPath.at(toolI)
+    stepTool()
     updateChunks()
   }
 }
@@ -72,21 +76,27 @@ function updateChunks(){
   
 
 
-  // if(paused){
-  //   console.log(intersects,tool)
-  // }
   
   tool.position = toolPath[toolI]
-
+  
   let chunks = map.getIntersectingChunks(tool.box)
- 
+  
   // get the tool intersection boxes in world space all at once
   let chunkIntersects = tool.makeChunkIntersects(chunks)
-
-
+  
+  if(paused){
+    console.log(chunkIntersects)
+    console.log(JSON.parse(JSON.stringify(chunks)))
+  }
+  
   for(let {intersect,chunk} of chunkIntersects){
     chunk.booleanWithTool(tool,intersect)
     chunk.mesh()
+  }
+
+
+  if(paused){
+    console.log(JSON.parse(JSON.stringify(chunks)))
   }
 }
 
@@ -105,7 +115,7 @@ export async function setup(scene, camera, renderer) {
 
 export function draw(scene, camera, renderer) {
   if(!paused){
-    toolI = (toolI +1) % 128
+    stepTool()
     updateChunks()
   }
 }

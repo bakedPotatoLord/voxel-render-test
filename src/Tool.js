@@ -131,33 +131,25 @@ export default class Tool {
 
   }
 
-  *makeChunkIntersects(chunks){
+  makeChunkIntersects(chunks){
+    let arr = Array(chunks.length)
+    let i = 0
     for(let chunk of chunks){
-      yield {intersect:this.box.intersect(chunk.box.clone()), chunk}
+      arr[i] =  {intersect:this.box.intersect(chunk.box.clone()), chunk}
+      i++
     }
+    return arr
   }
 
-  *generateCutCircle(box) {
-    let {min,max} = box;
-    for(let z = min.z; z <= max.z; z++){
-      for(let y = min.y; y <= max.y; y++){
-        for(let x = min.x; x <= max.x; x++){
-          yield new Vector3(x,y,z)
-        }
-      }
-
-    }
-    yield h
-  }
+  
 
   set position(pos) {
-
-    this.#position.set(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
-    this.mesh.position.set(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z));
+    this.#position.set(pos.x, pos.y, pos.z);
+    this.mesh.position.set(pos.x, pos.y, pos.z);
   }
 
   get position() {
-    return this.#position.clone();
+    return this.#position.clone().floor();
   }
 
   get box() {
@@ -171,7 +163,7 @@ export default class Tool {
         x: this.maxRadius,
         y: this.height,
         z: this.maxRadius
-      }).ceil(),
+      }).floor(),
     )
   }
   
