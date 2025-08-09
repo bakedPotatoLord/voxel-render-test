@@ -63,6 +63,9 @@ export default class VoxelMap {
         }
       }
     }
+
+    const numVoxels = this.chunks.length * this.chunkSize.x * this.chunkSize.y * this.chunkSize.z;
+    console.log(`voxel map init ${this.chunks.length} chunks; ${numVoxels} voxels`)
   }
 
 
