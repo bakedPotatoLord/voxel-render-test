@@ -226,7 +226,6 @@ export default class Chunk {
     this.geo.attributes.normal.needsUpdate = true;
     this.geo.attributes.uv.needsUpdate = true;
 
-    // console.log(verts)
     return this.geo;
   }
 
