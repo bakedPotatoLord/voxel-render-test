@@ -236,17 +236,9 @@ export default class Chunk {
 
     let {min:toolLow,max:toolHigh} = toolBox
     
-    toolLow.floor()
-    toolHigh.floor()
 
     //intersect vectors are all integers
     let intersect = toolBox.intersect(this.box)
-
-    // intersect.min.sub(new Vector3(1,1,1))
-    // intersect.max.add(new Vector3(1,1,1))
-
-    // console.log(this.box,intersect)
-  
 
     //iterate through all tool voxels relative to origin
     for(let y= intersect.min.y; y < intersect.max.y; y++){

@@ -11,7 +11,7 @@ let textureMap = await textureLoader.loadAsync(texture)
 textureMap.matrix.setUvTransform(0, 0, 1, 1,0,1,1 );
 
 const chunkSize = new THREE.Vector3(32,32,32)
-const mapSize = new THREE.Vector3(128,128,128)
+const mapSize = new THREE.Vector3(128,32,128)
 let map = new VoxelMap(chunkSize,mapSize)
 let tool = new Tool()
 
@@ -69,26 +69,42 @@ export function stepBack(){
 }
 
 function updateChunks(){
-  let intersects = map.getIntersectingChunks(tool.box)
- 
-  if(paused){
-    console.log(intersects,tool)
-  }
-  for (let chunk of intersects) {
-    chunk.booleanWithTool(tool)
-  }
-  intersects.forEach((chunk) => {
-    chunk.mesh()
-  })
+  
+
+  
+  
+  
+
+  // pass the tool intersection boxes to tool generators that yield voxels to cut in global space
+
+  // if(paused){
+  //   console.log(intersects,tool)
+  // }
+  // for (let chunk of intersects) {
+  //   chunk.booleanWithTool(tool)
+  // }
+  // intersects.forEach((chunk) => {
+  //   chunk.mesh()
+  // })
 }
 
 
 export async function setup(scene, camera, renderer) {
   
-  let chunks = new THREE.Object3D({}) 
-  chunks.add(...meshes)
+  let chunksObj = new THREE.Object3D({}) 
+  chunksObj.add(...meshes)
+  scene.add(chunksObj)
   scene.add(toolMesh)
-  scene.add(chunks)
+
+
+  let chunks = map.getIntersectingChunks(tool.box)
+ 
+  // get the tool intersection boxes in world space all at once
+  let chunkIntersects = tool.makeChunkIntersects(chunks)
+
+  for(let intersect of chunkIntersects){
+    
+  }
   
 }
 

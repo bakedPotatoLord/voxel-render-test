@@ -14,7 +14,6 @@ export default class Tool {
       return 10
     };
     this.maxRadius = 10
-    this.generateMatrix()
   }
 
   toMesh(material){ 
@@ -122,24 +121,14 @@ export default class Tool {
 
   }
 
-  generateMatrix() {
-    this.data = new Uint8Array(this.width * this.height * this.width);
-    this.arr = new ndarray(this.data, [this.width, this.height, this.width], [1, this.width, this.width * this.height],0);
-    let center = this.maxRadius>>1;
-    for(let y= 0; y<this.height; y++){
-      for(let x= 0; x<this.width; x++){
-        for(let z= 0; z<this.width; z++){
-          //check if inside radius
-          const inRadius = math.hypot(
-            (x-center),
-            (z-center),
-          ) < this.widthFunc(y)
-
-          const val = inRadius ? 1:0
-          this.arr.set(x, y, z, val)
-        }
-      }
+  *makeChunkIntersects(chunks){
+    for(let chunk of chunks){
+      yield this.box.intersect(chunk.box.clone())
     }
+  }
+
+  *generateCutCircle(chunkBox) {
+    yield h
   }
 
   setPos(pos) {
@@ -148,26 +137,18 @@ export default class Tool {
   }
 
   get box() {
-    return this.#box.set(
+    return new Box3(
       this.position.clone().sub({
         x: this.maxRadius,
         y: 0,
         z: this.maxRadius
-      }),
+      }).floor(),
       this.position.clone().add({
         x: this.maxRadius,
         y: this.height,
         z: this.maxRadius
-      })
+      }).ceil(),
     )
-  }
-
-  get center(){
-    return this.position.clone().add({
-      x: this.maxRadius/2,
-      y: this.height/2,
-      z: this.maxRadius/2
-    })
   }
   
 }
