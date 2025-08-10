@@ -235,7 +235,15 @@ export default class Chunk {
 
     //iterate through all tool voxels relative to origin
     for(let y= min.y; y < max.y; y++){
-    let radius = tool.radiusFunc(y-toolCenter.y)
+    // Calculate tool-relative Y coordinate
+    let toolRelativeY = y - toolCenter.y;
+    
+    // Skip if outside tool's height range
+    if (toolRelativeY < 0 || toolRelativeY > tool.height) {
+      continue;
+    }
+    
+    let radius = tool.radiusFunc(toolRelativeY)
       for(let x= min.x; x < max.x; x++){
           for(let z= min.z; z < max.z; z++){
           // break if outside circle
