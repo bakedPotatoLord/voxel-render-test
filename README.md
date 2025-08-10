@@ -1,5 +1,6 @@
-# Vue 3 + Vite
+# voxel-render-test
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A voxel renderer for CAM animation.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+Idealy this gets shoved into Kiri:Moto eventually, so that it can support thread cutting and undercutting
+
