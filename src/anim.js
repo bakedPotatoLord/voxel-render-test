@@ -31,24 +31,31 @@ let toolMat = new THREE.MeshPhongMaterial({
 
 let toolMesh = tool.toMesh(toolMat)
 
+let toolIprev = 0
 let toolI = 0
 
-let pathlen = 16
+let pathlen = 64
 
 let toolPath = new Array(pathlen).fill().map((_,i) => {
   return new THREE.Vector3(
-    Math.cos(i * Math.PI * 2 / pathlen)*(mapSize.x/3)+(mapSize.x/2),
+    Math.cos(i * Math.PI * 2 / pathlen)*(mapSize.x/3.0101010)+(mapSize.x/2),
     mapSize.y-20,
-    Math.sin(i * Math.PI * 2 / pathlen)*(mapSize.z/3)+(mapSize.z/2),
+    Math.sin(i * Math.PI * 2 / pathlen)*(mapSize.z/3.0101010)+(mapSize.z/2),
   )
 })
 
+cutTool(toolPath[toolI]).forEach(chunk => {
+  chunk.mesh()
+})
+
 function stepTool(){
+  toolIprev = toolI
   toolI = (toolI + 1) % pathlen
   tool.position = toolPath[toolI]
 }
 
 function unstepTool(){
+  toolIprev = toolI
   toolI = (toolI - 1 + pathlen) % pathlen
   tool.position = toolPath[toolI]
 }
@@ -65,23 +72,36 @@ export function unpause(){
 
 export function step(){
   stepTool()
-  let toMesh = cutPath(toolPath.at(toolI-1) ,toolPath.at(toolI))
-  toMesh.push(...cutTool(toolPath.at(toolI)))
 
+  if(paused){
+    console.log(toolPath[toolIprev], toolPath[toolI])
+  }
 
-  let unique = new Set(toMesh)
+  let toMesh = cutPath(toolPath[toolIprev] ,toolPath[toolI])
+  // toMesh.push(...cutTool(toolPath[toolI]))
 
-  unique.forEach(chunk => {
+  toMesh.forEach(chunk => {
     chunk.mesh()
   })
 }
 
 export function stepBack(){
   unstepTool()
+
+  if(paused){
+    console.log(toolPath[toolIprev], toolPath[toolI])
+  }
+
+  let toMesh = cutPath(toolPath[toolIprev] ,toolPath[toolI])
+  // toMesh.push(...cutTool(toolPath[toolI]))
+
+  toMesh.forEach(chunk => {
+    chunk.mesh()
+  })
 }
 
 function cutTool(position){
-  
+  tool.position = position
   let toolChunks = map.getIntersectingChunks(tool.box)
   
   // get the tool intersection boxes in world space all at once
@@ -131,7 +151,9 @@ function cutPath(start, end) {
     for (let cy = minChunkIdx.y; cy <= maxChunkIdx.y; cy++) {
       for (let cz = minChunkIdx.z; cz <= maxChunkIdx.z; cz++) {
         const chunk = map.getChunk(cx, cy, cz);
-        if (!chunk) continue;
+        if (!chunk) {
+          throw new Error(`chunk not found at (${cx}, ${cy}, ${cz})`);
+        };
         
         // Use Chunk's method to process swept tool cutting
         if (chunk.processSweptToolCut(tool, start, end, sweepBounds)) {

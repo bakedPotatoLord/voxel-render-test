@@ -11,22 +11,13 @@ const max_triangles = 4096<<2;
 
 export default class Chunk {
 
-  #box = new Box3();
-
   constructor(size, pos) {
     this.width = size.x;
     this.height = size.y;
     this.depth = size.z;
-    this.position = pos.multiply(size);
+    this.position = pos.clone().multiply(size);
 
     this.size = size;
-
-    console.log
-    this.#box.set(
-      new Vector3(0, 0, 0),
-      size.clone()
-    );
-
     // console.log(this.size, this.width, this.height, this.depth)
 
     this.data = new Uint8Array(this.width * this.height * this.depth);
@@ -34,12 +25,9 @@ export default class Chunk {
 
     this.geo = new BufferGeometry();
 
-    // this.map = null
-
-
     //for greedy meshing
     this.i = 0
-    this.points = new Float32Array(max_triangles * 3),
+    this.points = new Float32Array(max_triangles * 3);
     this.uvs = new Uint8Array(max_triangles * 2);
 
     this.pointsBuffer = new BufferAttribute(this.points, 3);
@@ -63,11 +51,11 @@ export default class Chunk {
 
   setVoxel(x, y, z, value) {
     if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(z)) {
-      console.warn("non-integer voxel write!", toCut)
+      console.warn("non-integer voxel write!", {x,y,z})
     }
 
     if (x < 0 || x >= this.width || y < 0 || y >= this.height || z < 0 || z >= this.depth) {
-      console.warn("out of bounds voxel write!", x, y, z)
+      console.warn("out of bounds voxel write!", {x,y,z})
       return
     }
 
@@ -208,6 +196,8 @@ export default class Chunk {
     this.i = 0
     //mesher sets i and buffers
     this.mesher(this.arr, []);
+
+    console.log("meshed",this.position)
 
     this.pointsBuffer.clearUpdateRanges();
     this.pointsBuffer.addUpdateRange(0, this.i);

@@ -153,13 +153,14 @@ export default class Tool {
   }
 
   get box() {
+    const pos = this.#position.clone()
     return new Box3(
-      this.position.sub({
+      pos.clone().sub({
         x: this.maxRadius,
         y: 0,
         z: this.maxRadius
       }).floor(),
-      this.position.add({
+      pos.clone().add({
         x: this.maxRadius,
         y: this.height,
         z: this.maxRadius
