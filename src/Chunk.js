@@ -197,7 +197,7 @@ export default class Chunk {
     //mesher sets i and buffers
     this.mesher(this.arr, []);
 
-    console.log("meshed",this.position)
+    // console.log("meshed",this.position)
 
     this.pointsBuffer.clearUpdateRanges();
     this.pointsBuffer.addUpdateRange(0, this.i);
