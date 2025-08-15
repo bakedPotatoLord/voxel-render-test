@@ -215,27 +215,27 @@ export default class Tool {
     
     // Determine valid t-interval for localY
     let tLo = 0, tHi = 1;
-    if (Math.abs(dy) < 1e-12) {
+    if (Math.abs(dy) < eps) {
       // dy == 0: localY is constant
       const localYConst = voxelPos.y - start.y;
-      if (localYConst < 0 || localYConst > this.height) return false;
+      if (localYConst < -eps || localYConst > this.height + eps) return false;
     } else {
       // dy != 0: solve for t range
       const t1 = (voxelPos.y - start.y - this.height) / dy;
       const t2 = (voxelPos.y - start.y) / dy;
       const tMin = Math.min(t1, t2);
       const tMax = Math.max(t1, t2);
-      tLo = Math.max(0, tMin);
-      tHi = Math.min(1, tMax);
+      tLo = Math.max(0 - eps, tMin);
+      tHi = Math.min(1 + eps, tMax);
       if (tLo >= tHi) return false;
     }
 
     // Collect t-breakpoints
     const tBreaks = [tLo, tHi];
-    if (Math.abs(dy) > 1e-12) {
+    if (Math.abs(dy) > eps) {
       for (let yy = 0; yy <= this.height; yy++) {
         const tAtY = (voxelPos.y - start.y - yy) / dy;
-        if (tAtY > tLo + 1e-12 && tAtY < tHi - 1e-12) {
+        if (tAtY > tLo + eps && tAtY < tHi - eps) {
           tBreaks.push(tAtY);
         }
       }
@@ -245,7 +245,7 @@ export default class Tool {
     tBreaks.sort((a, b) => a - b);
     const cleaned = [];
     for (let val of tBreaks) {
-      if (cleaned.length === 0 || Math.abs(val - cleaned[cleaned.length - 1]) > 1e-9) {
+      if (cleaned.length === 0 || Math.abs(val - cleaned[cleaned.length - 1]) > eps) {
         cleaned.push(val);
       }
     }
@@ -274,11 +274,11 @@ export default class Tool {
       // Test if Dist^2(t) - rMax^2 <= 0 for some t in [ta,tb]
       const Cprime = C - rMax * rMax;
 
-      if (Math.abs(A) < 1e-12) {
+      if (Math.abs(A) < eps) {
         // Linear case
         const gta = B * ta + Cprime;
         const gtb = B * tb + Cprime;
-        if (gta <= 0 || gtb <= 0 || (gta > 0 && gtb < 0) || (gta < 0 && gtb > 0)) {
+        if (gta <= eps || gtb <= eps || (gta > eps && gtb < -eps) || (gta < -eps && gtb > eps)) {
           return true;
         }
       } else {
@@ -290,12 +290,12 @@ export default class Tool {
         const gtb = evalAt(tb);
         let gmin = Math.min(gta, gtb);
         
-        if (tStar >= ta && tStar <= tb) {
+        if (tStar >= ta - eps && tStar <= tb + eps) {
           const gst = evalAt(tStar);
           gmin = Math.min(gmin, gst);
         }
         
-        if (gmin <= 0) return true;
+        if (gmin <= eps) return true;
       }
     }
     
