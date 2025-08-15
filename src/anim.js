@@ -34,15 +34,32 @@ let toolMesh = tool.toMesh(toolMat)
 let toolIprev = 0
 let toolI = 0
 
-let pathlen = 64
+let pathlen = 16
+
+// let toolPath = new Array(pathlen).fill().map((_,i) => {
+//   return new THREE.Vector3(
+//     Math.cos(i * Math.PI * 2 / pathlen)*(mapSize.x/3.0101010)+(mapSize.x/2),
+//     mapSize.y-20,
+//     Math.sin(i * Math.PI * 2 / pathlen)*(mapSize.z/3.0101010)+(mapSize.z/2),
+//   )
+// })
+
+let xAcc = 0
+
 
 let toolPath = new Array(pathlen).fill().map((_,i) => {
-  return new THREE.Vector3(
-    Math.cos(i * Math.PI * 2 / pathlen)*(mapSize.x/3.0101010)+(mapSize.x/2),
-    mapSize.y-20,
-    Math.sin(i * Math.PI * 2 / pathlen)*(mapSize.z/3.0101010)+(mapSize.z/2),
-  )
+
+  let n = i% 4
+
+  let a = n & 2 // 11,00
+
+  let b = n & 1 // 01,01,
+
+  xAcc+= b?30:0
+  
+  return new THREE.Vector3(xAcc,mapSize.y-20,a?mapSize.z/4:mapSize.z/4*3)
 })
+  
 
 cutTool(toolPath[toolI]).forEach(chunk => {
   chunk.mesh()
