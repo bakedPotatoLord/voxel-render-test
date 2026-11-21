@@ -66,15 +66,19 @@ cutTool(toolPath[toolI]).forEach(chunk => {
 })
 
 function stepTool(){
+  if (toolI >= pathlen - 1) return false
   toolIprev = toolI
-  toolI = (toolI + 1) % pathlen
+  toolI = toolI + 1
   tool.position = toolPath[toolI]
+  return true
 }
 
 function unstepTool(){
+  if (toolI <= 0) return false
   toolIprev = toolI
-  toolI = (toolI - 1 + pathlen) % pathlen
+  toolI = toolI - 1
   tool.position = toolPath[toolI]
+  return true
 }
 
 let paused = true
@@ -88,7 +92,7 @@ export function unpause(){
 }
 
 export function step(){
-  stepTool()
+  if (!stepTool()) return
 
   if(paused){
     console.log(toolPath[toolIprev], toolPath[toolI])
@@ -103,7 +107,7 @@ export function step(){
 }
 
 export function stepBack(){
-  unstepTool()
+  if (!unstepTool()) return
 
   if(paused){
     console.log(toolPath[toolIprev], toolPath[toolI])
@@ -199,7 +203,7 @@ export async function setup(scene, camera, renderer) {
 export function draw(scene, camera, renderer) {
   if(!paused){
     
-    if(toolI >= pathlen){
+    if(toolI >= pathlen - 1){
       pause()
       return
     }

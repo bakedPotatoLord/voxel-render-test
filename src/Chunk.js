@@ -7,7 +7,7 @@ import compileMesher from "greedy-mesher";
 
 
 
-const max_triangles = 4096<<2;
+const max_vertices = 4096<<2;
 
 export default class Chunk {
 
@@ -27,11 +27,11 @@ export default class Chunk {
 
     //for greedy meshing
     this.i = 0
-    this.points = new Float32Array(max_triangles * 3);
-    this.uvs = new Uint8Array(max_triangles * 2);
+    this.points = new Float32Array(max_vertices * 3);
+    this.uvs = new Uint8Array(max_vertices * 2);
 
     this.pointsBuffer = new BufferAttribute(this.points, 3);
-    this.uvsBuffer = new BufferAttribute(this.uvs, 2);
+    this.uvsBuffer = new BufferAttribute(this.uvs, 2, true);
 
     this.mesher = compileMesher({
       extraArgs: 1,
@@ -165,7 +165,12 @@ export default class Chunk {
     ];
 
     let pIdx = this.i;
-    let uvIdx = this.i;
+    let uvIdx = (this.i / 3) * 2;
+
+    if (pIdx + faces.length * 9 > points.length) {
+      console.warn("Chunk vertex buffer overflow!", this.position);
+      return pIdx;
+    }
 
     for (let f = 0; f < faces.length; ++f) {
       const tri = faces[f];
@@ -176,8 +181,8 @@ export default class Chunk {
         points[pIdx++] = pz[iz];
 
         const [u, v_] = baseUVs[v + (f % 2) * 3]; // use triangle 0 or 1 UVs
-        uvs[uvIdx++] = u * 65535;
-        uvs[uvIdx++] = v_ * 65535;
+        uvs[uvIdx++] = u * 255;
+        uvs[uvIdx++] = v_ * 255;
       }
     }
 
@@ -199,22 +204,29 @@ export default class Chunk {
 
     // console.log("meshed",this.position)
 
-    this.pointsBuffer.clearUpdateRanges();
-    this.pointsBuffer.addUpdateRange(0, this.i);
-
-    this.uvsBuffer.clearUpdateRanges();
-    this.uvsBuffer.addUpdateRange(0, (this.i<<1)/3);
-
     this.geo.name = "chunk"+this.position.toString();
 
     this.geo.setAttribute("position", this.pointsBuffer);
     this.geo.setAttribute("uv", this.uvsBuffer);
+    this.geo.setDrawRange(0, this.i / 3);
 
-    this.geo.computeVertexNormals();
+    this.pointsBuffer.clearUpdateRanges();
+    this.uvsBuffer.clearUpdateRanges();
 
-    this.geo.attributes.position.needsUpdate = true;
-    this.geo.attributes.normal.needsUpdate = true;
-    this.geo.attributes.uv.needsUpdate = true;
+    if (this.i > 0) {
+      this.pointsBuffer.addUpdateRange(0, this.i);
+      this.uvsBuffer.addUpdateRange(0, (this.i / 3) * 2);
+
+      this.geo.computeVertexNormals();
+      this.geo.attributes.normal.clearUpdateRanges();
+      this.geo.attributes.normal.addUpdateRange(0, this.i);
+
+      this.geo.attributes.position.needsUpdate = true;
+      this.geo.attributes.normal.needsUpdate = true;
+      this.geo.attributes.uv.needsUpdate = true;
+    } else if (!this.geo.attributes.normal) {
+      this.geo.computeVertexNormals();
+    }
 
     return this.geo;
   }

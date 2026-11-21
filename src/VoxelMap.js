@@ -48,9 +48,9 @@ export default class VoxelMap {
             console.log(outerX, outerY, outerZ);
             chunk.forEach((x, y, z) => {
               let ret = !(
-                (outerX && x > this.remChunks.x) ||
-                (outerY && y > this.remChunks.y) ||
-                (outerZ && z > this.remChunks.z)
+                (outerX && x >= this.remChunks.x) ||
+                (outerY && y >= this.remChunks.y) ||
+                (outerZ && z >= this.remChunks.z)
               );
 
               chunk.setVoxel(x, y, z, ret ? 1 : 0);
