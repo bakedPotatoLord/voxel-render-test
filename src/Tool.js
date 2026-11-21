@@ -23,25 +23,38 @@ export class Tool {
     this.maxRadius = 11
   }
 
+  getMeshYSteps() {
+    const steps = [];
+    for (let y = 0; y <= this.height; y++) {
+      steps.push(y);
+    }
+    if (steps[steps.length - 1] < this.height) {
+      steps.push(this.height);
+    }
+    return steps;
+  }
+
   toMesh(material){ 
     const geometry = new BufferGeometry();
     const vertices = [];
     const revSegments = 64; // Number of segments for the revolution
     const revSeg = 1/revSegments;
 
-    const ySegs = this.height;
+    const ySteps = this.getMeshYSteps();
 
     let lastRadius;
+    let lastY;
 
-    for (let i = 0; i <= ySegs; i++) { //iterate over y segs
+    for (const y of ySteps) { //iterate over y steps
 
-      let radius = this.radiusFunc(i);
-      if(!lastRadius){
+      let radius = this.radiusFunc(y);
+      if(lastRadius === undefined){
         lastRadius = radius;
+        lastY = y;
         continue;
       }
 
-      //if las last radius, iterate around the circle
+      //if has last radius, iterate around the circle
       for(let j =0; j<1;j+=revSeg){
 
         //2 points from current radius
@@ -49,14 +62,14 @@ export class Tool {
         let az = radius * Math.sin(j * Math.PI * 2);
         let bx = radius * Math.cos((j + revSeg) * Math.PI * 2);
         let bz = radius * Math.sin((j + revSeg) * Math.PI * 2);
-        let aby = i
+        let aby = y
 
         // 2 points from last radius
         let cx = lastRadius * Math.cos(j * Math.PI * 2);
         let cz = lastRadius * Math.sin(j * Math.PI * 2);
         let dx = lastRadius * Math.cos((j + revSeg) * Math.PI * 2);
         let dz = lastRadius * Math.sin((j + revSeg) * Math.PI * 2);
-        let cdy = i-1;
+        let cdy = lastY;
 
         // push vertices
         vertices.push(ax, aby, az);
@@ -68,6 +81,7 @@ export class Tool {
         vertices.push(cx, cdy, cz);
       } 
       lastRadius = radius;
+      lastY = y;
     }
 
     // top and bottom vars
@@ -78,7 +92,7 @@ export class Tool {
 
     let topRadius = this.radiusFunc(0)
 
-    let bottomRadius = this.radiusFunc(ySegs)
+    let bottomRadius = this.radiusFunc(this.height)
 
     //make top and bottom
     for(let j =0; j<1;j+=revSeg){
@@ -93,26 +107,30 @@ export class Tool {
       
       if(!startT) {
         startT = new THREE.Vector3(tx, 0, tz);
-        startB = new THREE.Vector3(bx, ySegs, bz);
+        startB = new THREE.Vector3(bx, this.height, bz);
       }else if(!lastT){
         lastT = new THREE.Vector3(tx, 0, tz);
-        lastB = new THREE.Vector3(bx, ySegs, bz);
+        lastB = new THREE.Vector3(bx, this.height, bz);
       }else{
         //if enough for a triangle
 
         //for top
-        vertices.push(startT.x, startT.y, startT.z);
-        vertices.push(lastT.x, lastT.y, lastT.z);
-        vertices.push(tx, 0, tz);
-        lastT.setX(tx);
-        lastT.setZ(tz);
+        if (topRadius > 0) {
+          vertices.push(startT.x, startT.y, startT.z);
+          vertices.push(lastT.x, lastT.y, lastT.z);
+          vertices.push(tx, 0, tz);
+          lastT.setX(tx);
+          lastT.setZ(tz);
+        }
 
         //for bottom
-        vertices.push(startB.x, startB.y, startB.z);
-        vertices.push(bx, ySegs, bz);
-        vertices.push(lastB.x, lastB.y, lastB.z);
-        lastB.setX(bx);
-        lastB.setZ(bz);
+        if (bottomRadius > 0) {
+          vertices.push(startB.x, startB.y, startB.z);
+          vertices.push(bx, this.height, bz);
+          vertices.push(lastB.x, lastB.y, lastB.z);
+          lastB.setX(bx);
+          lastB.setZ(bz);
+        }
       }
     } 
 
@@ -143,7 +161,9 @@ export class Tool {
 
   set position(pos) {
     this.#position.set(pos.x, pos.y, pos.z);
-    this.mesh.position.set(pos.x, pos.y, pos.z);
+    if (this.mesh) {
+      this.mesh.position.set(pos.x, pos.y, pos.z);
+    }
   }
 
   get position() {
@@ -162,7 +182,7 @@ export class Tool {
         x: this.maxRadius,
         y: this.height,
         z: this.maxRadius
-      }).floor(),
+      }).ceil(),
     )
   }
 
@@ -235,6 +255,14 @@ export class Tool {
         const tAtY = (voxelPos.y - start.y - yy) / dy;
         if (tAtY > tLo + eps && tAtY < tHi - eps) {
           tBreaks.push(tAtY);
+        }
+      }
+      if (this.yBreakpoints) {
+        for (const yy of this.yBreakpoints) {
+          const tAtY = (voxelPos.y - start.y - yy) / dy;
+          if (tAtY > tLo + eps && tAtY < tHi - eps) {
+            tBreaks.push(tAtY);
+          }
         }
       }
     }
