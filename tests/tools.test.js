@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Tool } from "../src/Tool";
 import Chunk from "../src/Chunk";
 import { FlatEndMill, BullEndMill, BallMill, VBit } from "../src/tools";
+import * as allTools from "../src/tools";
 
 function assertValidMesh(tool) {
   const mat = new THREE.MeshBasicMaterial();
@@ -22,10 +23,9 @@ function assertValidMesh(tool) {
 
 describe("Tool subclasses", () => {
   test("all tools extend Tool", () => {
-    expect(new FlatEndMill()).toBeInstanceOf(Tool);
-    expect(new BullEndMill()).toBeInstanceOf(Tool);
-    expect(new BallMill()).toBeInstanceOf(Tool);
-    expect(new VBit()).toBeInstanceOf(Tool);
+    Object.values(allTools).forEach(tool => {
+      expect(new tool()).toBeInstanceOf(Tool);
+    })
   });
 
   test("FlatEndMill profile, options, and mesh", () => {
