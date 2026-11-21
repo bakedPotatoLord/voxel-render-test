@@ -1,7 +1,7 @@
 import VoxelMap from "./VoxelMap";
 import * as THREE from "three";
 import texture from "./assets/texture/oakMDF.png";
-import Tool from "./Tool";
+import {Tool} from "./Tool";
 // import vertex from "./shaders/vertex.glsl" with {type: "x-shader/x-vertex"};
 // import fragment from "./shaders/fragment.glsl" with {type: "x-shader/x-fragment"};
 

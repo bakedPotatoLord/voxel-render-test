@@ -1,11 +1,7 @@
 import { BufferGeometry, BufferAttribute, Mesh, Vector3, Box3, BoxHelper, Box3Helper, Vector2 } from "three";
 
-
 import ndarray from "ndarray";
-
 import compileMesher from "greedy-mesher";
-
-
 
 const max_vertices = 4096<<2;
 

@@ -2,7 +2,7 @@ import { Box3, Mesh, Vector3, BufferGeometry, Float32BufferAttribute, Box3Helper
 import * as THREE from "three";
 import ndarray from "ndarray";
 
-export default class Tool {
+export class Tool {
 
   #box = new Box3();
 
@@ -141,8 +141,6 @@ export default class Tool {
     return arr
   }
 
-  
-
   set position(pos) {
     this.#position.set(pos.x, pos.y, pos.z);
     this.mesh.position.set(pos.x, pos.y, pos.z);
@@ -169,7 +167,7 @@ export default class Tool {
   }
 
   /**
-   * Compute swept AABB for tool movement between two positions
+   * Compute swept AABB (Axis aligned bounding box) for tool movement between two positions
    */
   computeSweptAABB(start, end, mapBounds) {
     const startBox = new Box3(
